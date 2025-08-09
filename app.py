@@ -4,7 +4,7 @@ from datetime import datetime
 from flask import Flask, render_template, request
 import requests
 from bs4 import BeautifulSoup
-import tensorflow as tf
+#import tensorflow as tf
 from tensorflow import keras
 from keras.utils import custom_object_scope
 
@@ -24,8 +24,8 @@ class TrueDivide(Layer):
 
     def compute_output_shape(self, input_shape):
         return input_shape[0]
-from PIL import Image
-import numpy as np
+#from PIL import Image
+#import numpy as np
 import google.generativeai as genai
 
 # --- App Initialization ---
