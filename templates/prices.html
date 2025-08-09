@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Market Prices</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Today's Market Prices</h1>
+        {% if price_data and price_data[0] is string %}
+            <p class="error-message">{{ price_data[0] }}</p>
+        {% else %}
+        <table class="price-table">
+            <thead>
+                <tr>
+                    <th>Market</th>
+                    <th>Min Price (Rs/Quintal)</th>
+                    <th>Max Price (Rs/Quintal)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in price_data %}
+                <tr>
+                    <td>{{ item.market }}</td>
+                    <td>{{ item.min_price }}</td>
+                    <td>{{ item.max_price }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+        <br>
+        <a href="/">Go Back</a>
+    </div>
+</body>
+</html>

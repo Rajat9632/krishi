@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>AI Query</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+    <div class="container">
+        <h1>AI Query</h1>
+        <form method="post" action="{{ url_for('ai_query') }}">
+            <textarea id="userPrompt" name="user_prompt" rows="6" cols="60" placeholder="Enter your prompt here...">{{ request.form.user_prompt or '' }}</textarea>
+            <br />
+            <button type="button" onclick="startDictation()" style="margin-top:8px;">🎤 Speak</button>
+            <input type="submit" value="Get AI Response" />
+        </form>
+        <script>
+        let recognition;
+        function startDictation() {
+            if ('webkitSpeechRecognition' in window) {
+                recognition = new webkitSpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = true;
+                recognition.lang = 'kn-IN'; // Kannada
+
+                document.getElementById('userPrompt').placeholder = "Speak now...";
+
+                recognition.onresult = function(event) {
+                    let transcript = '';
+                    for (let i = 0; i < event.results.length; ++i) {
+                        transcript += event.results[i][0].transcript;
+                    }
+                    document.getElementById('userPrompt').value = transcript;
+                };
+
+                recognition.onend = function() {
+                    document.getElementById('userPrompt').placeholder = "Enter your prompt here...";
+                };
+
+                recognition.onerror = function(event) {
+                    recognition.stop();
+                    document.getElementById('userPrompt').placeholder = "Speech recognition error. Try again.";
+                    alert('Speech recognition error: ' + event.error);
+                };
+
+                recognition.start();
+            } else {
+                alert('Speech recognition not supported in this browser.');
+            }
+        }
+        </script>
+        {% if ai_response %}
+            <h2>AI Response:</h2>
+            <div class="ai-response">{{ ai_response }}</div>
+        {% endif %}
+        <br />
+        <a href="/">Go Back</a>
+    </div>
+</body>
+</html>

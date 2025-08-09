@@ -1,0 +1,17 @@
+# Python Virtual Environment
+venv/
+
+# Image Dataset folder (replace with your folder's name if different)
+New Plant Diseases Dataset(Augmented)/
+naii/
+
+# Uploads folder
+uploads/
+
+# Python cache files
+__pycache__/
+*.pyc
+
+# Editor / OS files
+.vscode/
+.DS_Store
