@@ -12,7 +12,7 @@ app.config['UPLOAD_FOLDER'] = '/tmp'
 
 # --- Configuration ---
 # ⚠️ IMPORTANT: Paste the public URL of your Hugging Face Space here
-HUGGING_FACE_URL = "https://your-username-your-space-name.hf.space/"
+HUGGING_FACE_URL = "https://huggingface.co/spaces/RajatChoudhary/krishi-mitra-model"
 
 # --- Functions ---
 
