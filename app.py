@@ -10,7 +10,7 @@ app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = '/tmp'
 
 # ⚠️ IMPORTANT: Paste your public Hugging Face Space URL here
-HUGGING_FACE_URL = "https://your-username-your-space-name.hf.space/"
+HUGGING_FACE_URL = "RajatChoudhary/krishi-mitra-model"
 
 def get_real_prediction(image_path):
     try:
