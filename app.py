@@ -3,28 +3,48 @@ from datetime import datetime
 from flask import Flask, render_template, request
 import requests
 from bs4 import BeautifulSoup
+from gradio_client import Client
 
-# App Initialization
+# --- App Initialization ---
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = '/tmp'
 
-# --- Data Mappings & Functions ---
+# --- Configuration ---
+# ⚠️ IMPORTANT: Paste the public URL of your Hugging Face Space here
+HUGGING_FACE_URL = "https://huggingface.co/spaces/RajatChoudhary/krishi-mitra-model"
+
+# --- Functions ---
+
+def get_real_prediction(image_path):
+    """
+    This function calls your AI model on Hugging Face to get a prediction.
+    """
+    try:
+        client = Client(HUGGING_FACE_URL)
+        result = client.predict(image_path, api_name="/predict")
+        
+        # The result from gradio_client is often a path to a file with the JSON data
+        # Let's find the primary prediction.
+        with open(result, "r") as f:
+            data = json.load(f)
+        
+        # Find the label with the highest confidence
+        top_prediction = max(data['confidences'], key=lambda x: x['confidence'])
+        pred_class = top_prediction['label']
+        confidence = top_prediction['confidence']
+
+        return f"Model Prediction: '{pred_class}' with {confidence:.2%} confidence."
+
+    except Exception as e:
+        print(f"Error calling Hugging Face API: {e}")
+        return "Error: Could not get a prediction from the AI model."
+
+
+# (All other functions for market prices, NLU simulation, etc. remain the same)
 state_codes = {"Karnataka": "KK", "Maharashtra": "MH"}
 commodity_codes = {"Onion": "103", "Pigeon Pea (Tur)": "301", "Orange": "34"}
 
-def get_prediction(image_path):
-    """
-    This is the fast SIMULATED AI model for disease prediction.
-    """
-    if "healthy" in image_path.lower():
-        return "Model Prediction: 'Healthy Leaf' with 98.7% confidence."
-    else:
-        return "Model Prediction: 'Diseased Leaf' with 95.2% confidence."
-
 def fetch_market_prices(state_name="Karnataka", commodity_name="Orange"):
-    """
-    This is the live web scraper function.
-    """
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36'}
     date_str = datetime.now().strftime("%d-%b-%Y")
     state_code = state_codes.get(state_name, "0")
@@ -51,16 +71,11 @@ def fetch_market_prices(state_name="Karnataka", commodity_name="Orange"):
         return [{'market': 'Scraper Failed', 'commodity': 'Could not fetch live data.'}]
 
 def parse_query_with_keywords(query):
-    """
-    This is the fast, simulated NLU function using keyword spotting.
-    """
     query = query.lower()
     state = "Unknown"
     commodity = "Unknown"
-    # Keywords for states
     if "karnataka" in query: state = "Karnataka"
     if "maharashtra" in query: state = "Maharashtra"
-    # Keywords for commodities
     if "tur" in query or "pigeon pea" in query: commodity = "Pigeon Pea (Tur)"
     if "onion" in query: commodity = "Onion"
     if "orange" in query: commodity = "Orange"
@@ -77,7 +92,7 @@ def predict():
     if file and file.filename != '':
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
         file.save(filepath)
-        prediction = get_prediction(filepath)
+        prediction = get_real_prediction(filepath) # Calls the new function
         return render_template('result.html', prediction_text=prediction)
     return render_template('result.html', prediction_text="Error: No file selected.")
 
