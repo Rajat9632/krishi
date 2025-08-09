@@ -1,4 +1,5 @@
 import os
+import json
 from datetime import datetime
 from flask import Flask, render_template, request
 import requests
@@ -11,7 +12,7 @@ app.config['UPLOAD_FOLDER'] = '/tmp'
 
 # --- Configuration ---
 # ⚠️ IMPORTANT: Paste the public URL of your Hugging Face Space here
-HUGGING_FACE_URL = "https://huggingface.co/spaces/RajatChoudhary/krishi-mitra-model"
+HUGGING_FACE_URL = "https://your-username-your-space-name.hf.space/"
 
 # --- Functions ---
 
@@ -21,11 +22,10 @@ def get_real_prediction(image_path):
     """
     try:
         client = Client(HUGGING_FACE_URL)
-        result = client.predict(image_path, api_name="/predict")
+        # The result from Gradio is a filepath to a JSON file
+        result_filepath = client.predict(image_path, api_name="/predict")
         
-        # The result from gradio_client is often a path to a file with the JSON data
-        # Let's find the primary prediction.
-        with open(result, "r") as f:
+        with open(result_filepath, "r") as f:
             data = json.load(f)
         
         # Find the label with the highest confidence
@@ -37,10 +37,12 @@ def get_real_prediction(image_path):
 
     except Exception as e:
         print(f"Error calling Hugging Face API: {e}")
+        # Add a check for the "sleeping" state of the Hugging Face Space
+        if "Service Unavailable" in str(e) or "503" in str(e):
+            return "The AI model is waking up. Please try again in 60 seconds."
         return "Error: Could not get a prediction from the AI model."
 
-
-# (All other functions for market prices, NLU simulation, etc. remain the same)
+# (All other functions for market prices and keyword search remain the same)
 state_codes = {"Karnataka": "KK", "Maharashtra": "MH"}
 commodity_codes = {"Onion": "103", "Pigeon Pea (Tur)": "301", "Orange": "34"}
 
@@ -52,7 +54,6 @@ def fetch_market_prices(state_name="Karnataka", commodity_name="Orange"):
     from_date = "01-Jan-2024"
     to_date = date_str
     url = f"https://agmarknet.gov.in/SearchCmmMkt.aspx?Tx_Commodity={commodity_code}&Tx_State={state_code}&Tx_District=0&Tx_Market=0&DateFrom={from_date}&DateTo={to_date}&Fr_Date={from_date}&To_Date={to_date}&Tx_Trend=0&Tx_CommodityHead={commodity_name}&Tx_StateHead={state_name}"
-    results = []
     try:
         response = requests.get(url, headers=headers, timeout=5)
         response.raise_for_status()
@@ -61,6 +62,7 @@ def fetch_market_prices(state_name="Karnataka", commodity_name="Orange"):
         if not data_table: return [{'market': 'Error', 'commodity': 'Data table not found.'}]
         rows = data_table.find_all('tr')[1:]
         if not rows or "No Data Found" in rows[0].text: return [{'market': 'No Data', 'commodity': 'No data found for this query.'}]
+        results = []
         for row in rows:
             columns = row.find_all('td')
             if len(columns) >= 8:
@@ -72,8 +74,7 @@ def fetch_market_prices(state_name="Karnataka", commodity_name="Orange"):
 
 def parse_query_with_keywords(query):
     query = query.lower()
-    state = "Unknown"
-    commodity = "Unknown"
+    state = "Unknown"; commodity = "Unknown"
     if "karnataka" in query: state = "Karnataka"
     if "maharashtra" in query: state = "Maharashtra"
     if "tur" in query or "pigeon pea" in query: commodity = "Pigeon Pea (Tur)"
@@ -92,7 +93,7 @@ def predict():
     if file and file.filename != '':
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
         file.save(filepath)
-        prediction = get_real_prediction(filepath) # Calls the new function
+        prediction = get_real_prediction(filepath) # Calls the REAL prediction function
         return render_template('result.html', prediction_text=prediction)
     return render_template('result.html', prediction_text="Error: No file selected.")
 
