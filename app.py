@@ -18,19 +18,17 @@ HUGGING_FACE_URL = "RajatChoudhary/krishi-mitra-model"
 
 def get_real_prediction(image_path):
     """
-    This function calls your AI model on Hugging Face and handles the response.
+    This function calls your AI model on Hugging Face and handles timeouts.
     """
     try:
         client = Client(HUGGING_FACE_URL)
-        result = client.predict(image_path, api_name="/predict")
-        
         # The result from Gradio is a filepath to a JSON file
-        # We need to open and read this file to get the data
-        with open(result, "r") as f:
+        result_filepath = client.predict(image_path, api_name="/predict")
+        
+        with open(result_filepath, "r") as f:
             data = json.load(f)
         
-        # The data contains a 'confidences' list of dictionaries
-        # We find the dictionary with the highest confidence
+        # Find the label with the highest confidence from the confidences list
         top_prediction = max(data['confidences'], key=lambda x: x['confidence'])
         pred_class = top_prediction['label']
         confidence = top_prediction['confidence']
@@ -38,9 +36,12 @@ def get_real_prediction(image_path):
         return f"Model Prediction: '{pred_class}' with {confidence:.2%} confidence."
 
     except Exception as e:
+        # This part is now smarter. It checks for specific timeout errors.
         print(f"Error calling Hugging Face API: {e}")
-        if "Service Unavailable" in str(e) or "503" in str(e):
-            return "The AI model is waking up. Please try again in 60 seconds."
+        error_str = str(e).lower()
+        if "503" in error_str or "service unavailable" in error_str or "timeout" in error_str:
+            return "The AI model is waking up from sleep. This can take up to a minute. Please try again shortly."
+        
         return "Error: Could not get a prediction from the AI model."
 
 # (All other functions for market prices and keyword search remain the same)
