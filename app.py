@@ -6,45 +6,27 @@ import requests
 from bs4 import BeautifulSoup
 from gradio_client import Client
 
-# --- App Initialization ---
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = '/tmp'
 
-# --- Configuration ---
-# ⚠️ IMPORTANT: Paste the public URL of your Hugging Face Space here
-HUGGING_FACE_URL = "RajatChoudhary/krishi-mitra-model"
-
-# --- Functions ---
+# ⚠️ IMPORTANT: Paste your public Hugging Face Space URL here
+HUGGING_FACE_URL = "https://your-username-your-space-name.hf.space/"
 
 def get_real_prediction(image_path):
-    """
-    This function calls your AI model on Hugging Face and handles timeouts.
-    """
     try:
         client = Client(HUGGING_FACE_URL)
-        # The result from Gradio is a filepath to a JSON file
         result_filepath = client.predict(image_path, api_name="/predict")
-        
         with open(result_filepath, "r") as f:
             data = json.load(f)
-        
-        # Find the label with the highest confidence from the confidences list
         top_prediction = max(data['confidences'], key=lambda x: x['confidence'])
         pred_class = top_prediction['label']
         confidence = top_prediction['confidence']
-
         return f"Model Prediction: '{pred_class}' with {confidence:.2%} confidence."
-
     except Exception as e:
-        # This part is now smarter. It checks for specific timeout errors.
         print(f"Error calling Hugging Face API: {e}")
-        error_str = str(e).lower()
-        if "503" in error_str or "service unavailable" in error_str or "timeout" in error_str:
-            return "The AI model is waking up from sleep. This can take up to a minute. Please try again shortly."
-        
-        return "Error: Could not get a prediction from the AI model."
+        return "Error: Could not get a prediction from the AI model. The model may be waking up. Please try again in a minute."
 
-# (All other functions for market prices and keyword search remain the same)
+# (All other functions for market prices, etc., remain the same)
 state_codes = {"Karnataka": "KK", "Maharashtra": "MH"}
 commodity_codes = {"Onion": "103", "Pigeon Pea (Tur)": "301", "Orange": "34"}
 
@@ -71,7 +53,6 @@ def fetch_market_prices(state_name="Karnataka", commodity_name="Orange"):
                 results.append({'market': columns[3].text.strip(), 'commodity': columns[4].text.strip(), 'min_price': columns[6].text.strip(), 'max_price': columns[7].text.strip()})
         return results
     except Exception as e:
-        print(f"Scraper failed: {e}")
         return [{'market': 'Scraper Failed', 'commodity': 'Could not fetch live data.'}]
 
 def parse_query_with_keywords(query):
@@ -84,10 +65,8 @@ def parse_query_with_keywords(query):
     if "orange" in query: commodity = "Orange"
     return {'state': state, 'commodity': commodity}
 
-# --- Routes ---
 @app.route('/')
-def homepage():
-    return render_template('index.html')
+def homepage(): return render_template('index.html')
 
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -95,7 +74,7 @@ def predict():
     if file and file.filename != '':
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
         file.save(filepath)
-        prediction = get_real_prediction(filepath) # Calls the REAL prediction function
+        prediction = get_real_prediction(filepath)
         return render_template('result.html', prediction_text=prediction)
     return render_template('result.html', prediction_text="Error: No file selected.")
 
@@ -107,8 +86,7 @@ def market_prices():
 @app.route('/query-price', methods=['POST'])
 def query_price():
     user_query = request.form.get('user_query', '')
-    if not user_query:
-        return render_template('result.html', prediction_text="Error: You did not enter a query.")
+    if not user_query: return render_template('result.html', prediction_text="Error: You did not enter a query.")
     entities = parse_query_with_keywords(user_query)
     state = entities.get('state', 'Unknown')
     commodity = entities.get('commodity', 'Unknown')
