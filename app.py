@@ -45,14 +45,17 @@ if os.path.exists(train_dir):
 else:
     print(f"CRITICAL ERROR: The directory '{train_dir}' was not found. Please check the path in app.py.")
 
-# --- 2. Load the AI Model for Image Prediction ---
-try:
-    with custom_object_scope({'TrueDivide': TrueDivide}):
-        model = tf.keras.models.load_model('disease_model.keras')
-    print("Custom disease detection model loaded successfully.")
-except Exception as e:
-    print(f"Error loading TensorFlow model: {e}")
-    model = None
+# # --- 2. Load the AI Model for Image Prediction ---
+# try:
+#     with custom_object_scope({'TrueDivide': TrueDivide}):
+#         model = tf.keras.models.load_model('disease_model.keras')
+#     print("Custom disease detection model loaded successfully.")
+# except Exception as e:
+#     print(f"Error loading TensorFlow model: {e}")
+#     model = None
+
+# ADD THIS LINE to ensure 'model' always exists
+model = None 
 
 # --- 3. All Function Definitions ---
 
