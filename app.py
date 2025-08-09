@@ -23,8 +23,14 @@ if GEMINI_API_KEY:
 else:
     print("CRITICAL ERROR: GEMINI_API_KEY environment variable not found.")
 
-# ⚠️ IMPORTANT: Update this path to where your 'train' folder is located
-train_dir = 'naii/New Plant Diseases Dataset(Augmented)/New Plant Diseases Dataset(Augmented)/train'
+# --- Load Class Names from JSON File ---
+try:
+    with open("class_names.json", "r") as f:
+        class_names = json.load(f)
+    print(f"Successfully loaded {len(class_names)} class names.")
+except FileNotFoundError:
+    print("CRITICAL ERROR: 'class_names.json' not found. Please add it to your repository.")
+    class_names = []
 
 # --- Generate Class Names ---
 class_names = []
