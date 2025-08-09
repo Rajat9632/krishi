@@ -18,17 +18,19 @@ HUGGING_FACE_URL = "RajatChoudhary/krishi-mitra-model"
 
 def get_real_prediction(image_path):
     """
-    This function calls your AI model on Hugging Face to get a prediction.
+    This function calls your AI model on Hugging Face and handles the response.
     """
     try:
         client = Client(HUGGING_FACE_URL)
-        # The result from Gradio is a filepath to a JSON file
-        result_filepath = client.predict(image_path, api_name="/predict")
+        result = client.predict(image_path, api_name="/predict")
         
-        with open(result_filepath, "r") as f:
+        # The result from Gradio is a filepath to a JSON file
+        # We need to open and read this file to get the data
+        with open(result, "r") as f:
             data = json.load(f)
         
-        # Find the label with the highest confidence
+        # The data contains a 'confidences' list of dictionaries
+        # We find the dictionary with the highest confidence
         top_prediction = max(data['confidences'], key=lambda x: x['confidence'])
         pred_class = top_prediction['label']
         confidence = top_prediction['confidence']
@@ -37,7 +39,6 @@ def get_real_prediction(image_path):
 
     except Exception as e:
         print(f"Error calling Hugging Face API: {e}")
-        # Add a check for the "sleeping" state of the Hugging Face Space
         if "Service Unavailable" in str(e) or "503" in str(e):
             return "The AI model is waking up. Please try again in 60 seconds."
         return "Error: Could not get a prediction from the AI model."
