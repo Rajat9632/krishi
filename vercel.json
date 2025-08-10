@@ -4,9 +4,17 @@
     {
       "src": "app.py",
       "use": "@vercel/python"
+    },
+    {
+      "src": "api/ai_query.py",
+      "use": "@vercel/python"
     }
   ],
   "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/ai_query.py"
+    },
     {
       "src": "/(.*)",
       "dest": "app.py"
