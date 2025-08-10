@@ -120,3 +120,26 @@ def query_price():
     commodity = entities.get('commodity', 'Unknown')
     price_data = fetch_market_prices(state_name=state, commodity_name=commodity)
     return render_template('prices.html', price_data=price_data)
+
+@app.route('/ai-query', methods=['GET', 'POST'])
+def ai_query():
+    ai_response = None
+    user_prompt = ""
+    if request.method == 'POST':
+        user_prompt = request.form.get('user_prompt', '')
+        if user_prompt:
+            try:
+                # The API key is already configured at the start of the app
+                ai_model = genai.GenerativeModel('gemini-1.5-flash-latest')
+                
+                # A more detailed prompt for better answers
+                full_prompt = f"You are a helpful agricultural AI assistant based in India. Provide a helpful and informative response to the following query. Keep your response concise but informative. Query: {user_prompt}"
+                
+                response = ai_model.generate_content(full_prompt)
+                ai_response = response.text.strip()
+            except Exception as e:
+                ai_response = f"AI API error: {e}"
+        else:
+            ai_response = "Error: No prompt provided."
+            
+    return render_template('ai_query.html', ai_response=ai_response, user_prompt=user_prompt)

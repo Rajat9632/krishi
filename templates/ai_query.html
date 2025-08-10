@@ -2,19 +2,32 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <title>AI Query</title>
+    <title>AI Assistant</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
 </head>
 <body>
     <div class="container">
-        <h1>AI Query</h1>
-        <form method="post" action="{{ url_for('ai_query') }}">
-            <textarea id="userPrompt" name="user_prompt" rows="6" cols="60" placeholder="Enter your prompt here...">{{ request.form.user_prompt or '' }}</textarea>
+        <h1>AI Assistant</h1>
+        <form id="aiForm">
+            <textarea id="userPrompt" name="user_prompt" rows="6" cols="60" placeholder="Enter your prompt here or click Speak..."></textarea>
             <br />
             <button type="button" onclick="startDictation()" style="margin-top:8px;">🎤 Speak</button>
-            <input type="submit" value="Get AI Response" />
+            <input type="submit" id="askButton" value="Get AI Response" />
         </form>
-        <script>
+        
+        <div id="responseContainer" style="display:none;">
+            <hr>
+            <h3>AI Response:</h3>
+            <div class="response-box">
+                <p id="aiResponseText"></p>
+            </div>
+        </div>
+        <br />
+        <a href="/">Go Back</a>
+    </div>
+
+    <script>
+        // --- Your Speech-to-Text Code ---
         let recognition;
         function startDictation() {
             if ('webkitSpeechRecognition' in window) {
@@ -23,7 +36,7 @@
                 recognition.interimResults = true;
                 recognition.lang = 'kn-IN'; // Kannada
 
-                document.getElementById('userPrompt').placeholder = "Speak now...";
+                document.getElementById('userPrompt').placeholder = "Listening...";
 
                 recognition.onresult = function(event) {
                     let transcript = '';
@@ -34,12 +47,11 @@
                 };
 
                 recognition.onend = function() {
-                    document.getElementById('userPrompt').placeholder = "Enter your prompt here...";
+                    document.getElementById('userPrompt').placeholder = "Enter your prompt here or click Speak...";
                 };
 
                 recognition.onerror = function(event) {
                     recognition.stop();
-                    document.getElementById('userPrompt').placeholder = "Speech recognition error. Try again.";
                     alert('Speech recognition error: ' + event.error);
                 };
 
@@ -48,13 +60,41 @@
                 alert('Speech recognition not supported in this browser.');
             }
         }
-        </script>
-        {% if ai_response %}
-            <h2>AI Response:</h2>
-            <div class="ai-response">{{ ai_response }}</div>
-        {% endif %}
-        <br />
-        <a href="/">Go Back</a>
-    </div>
+
+        // --- JavaScript to handle the form submission ---
+        const form = document.getElementById('aiForm');
+        const askButton = document.getElementById('askButton');
+        const responseContainer = document.getElementById('responseContainer');
+        const aiResponseText = document.getElementById('aiResponseText');
+        const userPrompt = document.getElementById('userPrompt');
+
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault(); // Stop the default form submission
+            
+            askButton.disabled = true;
+            askButton.value = "Thinking...";
+            responseContainer.style.display = 'block';
+            aiResponseText.textContent = "Loading...";
+
+            try {
+                // This calls your serverless function in the /api folder
+                const res = await fetch('/api/ai_query', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_prompt: userPrompt.value })
+                });
+
+                const data = await res.json();
+                if (!res.ok) { throw new Error(data.error); }
+                aiResponseText.textContent = data.response;
+
+            } catch (err) {
+                aiResponseText.textContent = `Error: ${err.message}`;
+            } finally {
+                askButton.disabled = false;
+                askButton.value = "Get AI Response";
+            }
+        });
+    </script>
 </body>
 </html>
