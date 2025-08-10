@@ -24,9 +24,18 @@ def get_real_prediction(image_path):
         
         client = Client(HUGGING_FACE_URL)
         result = client.predict(
-            safe_path,  # Pass safe path without spaces
-            api_name="/predict"
-        )
+    {
+        "path": image_path,
+        "url": None,
+        "size": None,
+        "orig_name": image_path.split("/")[-1],
+        "mime_type": "image/jpeg",
+        "is_stream": False,
+        "meta": {"_type": "gradio.FileData"}
+    },
+    api_name="/predict"
+)
+
 
         if "confidences" not in result:
             return "Error: Unexpected response from the model."
