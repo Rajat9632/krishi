@@ -121,7 +121,7 @@ def query_price():
     price_data = fetch_market_prices(state_name=state, commodity_name=commodity)
     return render_template('prices.html', price_data=price_data)
 
-@app.route('/ai-query', methods=['GET', 'POST'])
+@app.route('/ai_query', methods=['GET', 'POST'])
 def ai_query():
     ai_response = None
     user_prompt = ""
