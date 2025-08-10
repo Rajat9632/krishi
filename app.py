@@ -15,7 +15,13 @@ HUGGING_FACE_URL = "RajatChoudhary/krishi-mitra-model"
 def get_real_prediction(image_path):
     try:
         client = Client(HUGGING_FACE_URL)
-        result_filepath = client.predict(image_path, api_name="/predict")
+        
+        # Pass the file path as a tuple so Gradio treats it as a file upload
+        result_filepath = client.predict(
+            image_path,  # This can be the direct file path
+            api_name="/predict"
+        )
+        
         with open(result_filepath, "r") as f:
             data = json.load(f)
         top_prediction = max(data['confidences'], key=lambda x: x['confidence'])
@@ -25,6 +31,7 @@ def get_real_prediction(image_path):
     except Exception as e:
         print(f"Error calling Hugging Face API: {e}")
         return "Error: Could not get a prediction from the AI model. The model may be waking up. Please try again in a minute."
+
 
 # (All other functions for market prices, etc., remain the same)
 state_codes = {"Karnataka": "KK", "Maharashtra": "MH"}
