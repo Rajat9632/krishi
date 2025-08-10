@@ -16,26 +16,27 @@ def get_real_prediction(image_path):
     try:
         client = Client(HUGGING_FACE_URL)
         
-        # This will return a dictionary because your Space uses gr.Label
-        result = client.predict(image_path, api_name="/predict")
-        
-        # Check if result contains confidences
+        # Open the file so Gradio can upload it
+        with open(image_path, "rb") as f:
+            result = client.predict(
+                f,  # Pass file object, not just path
+                api_name="/predict"
+            )
+
         if "confidences" not in result:
             return "Error: Unexpected response from the model."
 
         confidences = result["confidences"]
-
-        # If confidences are lists like ["label", value], convert to dicts
         if confidences and isinstance(confidences[0], list):
             confidences = [{"label": c[0], "confidence": c[1]} for c in confidences]
 
         top_prediction = max(confidences, key=lambda x: x["confidence"])
-        pred_class = top_prediction["label"]
-        confidence = top_prediction["confidence"]
-        return f"Model Prediction: '{pred_class}' with {confidence:.2%} confidence."
+        return f"Model Prediction: '{top_prediction['label']}' with {top_prediction['confidence']:.2%} confidence."
+
     except Exception as e:
         print(f"Error calling Hugging Face API: {e}")
         return "Error: Could not get a prediction from the AI model. The model may be waking up. Please try again in a minute."
+
 
 
 # (All other functions for market prices, etc., remain the same)
