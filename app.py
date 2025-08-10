@@ -12,16 +12,21 @@ app.config['UPLOAD_FOLDER'] = '/tmp'
 # ⚠️ IMPORTANT: Paste your public Hugging Face Space URL here
 HUGGING_FACE_URL = "RajatChoudhary/krishi-mitra-model"
 
+import os
+import shutil
+
 def get_real_prediction(image_path):
     try:
-        client = Client(HUGGING_FACE_URL)
+        # Remove spaces from filename for Hugging Face upload
+        safe_path = image_path.replace(" ", "_")
+        if safe_path != image_path:
+            shutil.copy(image_path, safe_path)
         
-        # Open the file so Gradio can upload it
-        with open(image_path, "rb") as f:
-            result = client.predict(
-                f,  # Pass file object, not just path
-                api_name="/predict"
-            )
+        client = Client(HUGGING_FACE_URL)
+        result = client.predict(
+            safe_path,  # Pass safe path without spaces
+            api_name="/predict"
+        )
 
         if "confidences" not in result:
             return "Error: Unexpected response from the model."
@@ -36,6 +41,7 @@ def get_real_prediction(image_path):
     except Exception as e:
         print(f"Error calling Hugging Face API: {e}")
         return "Error: Could not get a prediction from the AI model. The model may be waking up. Please try again in a minute."
+
 
 
 
