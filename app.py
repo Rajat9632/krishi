@@ -16,17 +16,22 @@ def get_real_prediction(image_path):
     try:
         client = Client(HUGGING_FACE_URL)
         
-        # Pass the file path as a tuple so Gradio treats it as a file upload
-        result_filepath = client.predict(
-            image_path,  # This can be the direct file path
-            api_name="/predict"
-        )
+        # This will return a dictionary because your Space uses gr.Label
+        result = client.predict(image_path, api_name="/predict")
         
-        with open(result_filepath, "r") as f:
-            data = json.load(f)
-        top_prediction = max(data['confidences'], key=lambda x: x['confidence'])
-        pred_class = top_prediction['label']
-        confidence = top_prediction['confidence']
+        # Check if result contains confidences
+        if "confidences" not in result:
+            return "Error: Unexpected response from the model."
+
+        confidences = result["confidences"]
+
+        # If confidences are lists like ["label", value], convert to dicts
+        if confidences and isinstance(confidences[0], list):
+            confidences = [{"label": c[0], "confidence": c[1]} for c in confidences]
+
+        top_prediction = max(confidences, key=lambda x: x["confidence"])
+        pred_class = top_prediction["label"]
+        confidence = top_prediction["confidence"]
         return f"Model Prediction: '{pred_class}' with {confidence:.2%} confidence."
     except Exception as e:
         print(f"Error calling Hugging Face API: {e}")
