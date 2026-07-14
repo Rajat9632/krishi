@@ -8,13 +8,14 @@
 <body>
     <div class="container">
         <h1>Today's Market Prices</h1>
-        {% if price_data and price_data[0] is string %}
-            <p class="error-message">{{ price_data[0] }}</p>
+        {% if price_data and price_data[0].status == 'error' %}
+            <div class="notice notice-error">{{ price_data[0].message }}</div>
         {% else %}
         <table class="price-table">
             <thead>
                 <tr>
                     <th>Market</th>
+                    <th>Commodity</th>
                     <th>Min Price (Rs/Quintal)</th>
                     <th>Max Price (Rs/Quintal)</th>
                 </tr>
@@ -23,12 +24,16 @@
                 {% for item in price_data %}
                 <tr>
                     <td>{{ item.market }}</td>
+                    <td>{{ item.commodity }}</td>
                     <td>{{ item.min_price }}</td>
                     <td>{{ item.max_price }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
+        {% if price_data and price_data[0].state %}
+            <p class="table-note">{{ price_data[0].state }}{% if price_data[0].district %} / {{ price_data[0].district }}{% endif %}{% if price_data[0].report_date %} • {{ price_data[0].report_date }}{% endif %}</p>
+        {% endif %}
         {% endif %}
         <br>
         <a href="/">Go Back</a>
